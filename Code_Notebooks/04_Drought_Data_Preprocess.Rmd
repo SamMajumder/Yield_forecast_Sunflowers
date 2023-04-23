@@ -1,0 +1,219 @@
+---
+title: "Drought Data Preprocess"
+output: html_notebook
+---
+
+**Loading the packages**
+
+```{r}
+
+packages <- c("tidyverse","readxl","here","lubridate")
+
+
+lapply(packages, require,character.only =T)
+
+```
+
+
+**Importing the historical drought data and preprocessing it** 
+
+The historical drought data is in the subfolder called Historical_Drought_Data 
+(Main folder is Raw_Datasets).
+
+The data is 5km x 5km gridded monthly standardardized precipitation index (SPI) and
+standardized Precipitation Evapotranspiration index (SPEI) data acquired from NOAA. 
+Some meta data pertaining to these datasets can be found here: https://www.ncei.noaa.gov/pub/data/nidis/indices/nclimgrid-monthly/nidis_nclimgrid_readme_c20220520.txt
+
+Specific datasets used in this study had the following names in the database:
+1) nclimgrid-spei-gamma-01.nc (https://www.ncei.noaa.gov/pub/data/nidis/indices/nclimgrid-monthly/spei-gamma/)
+2) nclimgrid-spei-pearson-01.nc (https://www.ncei.noaa.gov/pub/data/nidis/indices/nclimgrid-monthly/spei-pearson/)
+3) nclimgrid-spi-gamma-01.nc (https://www.ncei.noaa.gov/pub/data/nidis/indices/nclimgrid-monthly/spi-gamma/)
+4) nclimgrid-spi-pearson-01.nc (https://www.ncei.noaa.gov/pub/data/nidis/indices/nclimgrid-monthly/spi-pearson/)
+
+The following steps were performed to extract data from each of the 
+aforementioned NetCDF raster files as csv. It should be mentioned that 
+data was extracted at the county centroids: 
+
+a) Import the Study_coordinates.csv file into ArcGIS Pro as point data on a map
+b) Make sure the coordinate system is Albers North American Confocal Conic (USGS)
+c) Import NetCDF raster data on the existing map/project
+d) Subset the NetCDF raster data by timeframe beginning at 1976 and ending at
+2022. Make sure the coordinate system is Albers North American Confocal Conic (USGS)
+e) Use Sample tool to extract data at points. The points are the county centroids.
+(Process as Multidimensional)
+f) This results in a Table which is then displayed on the map. 
+g) Spatial join is then used to join the table containing drought data to the 
+table containing the coordinates of the counties from the Study_coordinates.csv file. 
+h) The combined table is then exported from ArcGIS Pro as an excel file.
+
+Then the following code is applied on the excel files containing the historical
+drought data to preprocess them further.
+
+```{r}
+
+###############################################
+############### First preprocessing the SPEI GAMMA dataframe ###
+###################################
+
+Spei_gamma <- read_excel(here("Raw_Datasets",
+                        "Historical_Drought_Data",
+                        "SPEI_GAMMA.xlsx")) %>% 
+  mutate(StdTime = as.Date(StdTime)) %>% 
+  mutate(full_Date = format(StdTime,format = "%Y %b %d")) %>%
+  separate(full_Date, into = c("YEAR","MONTH","DAY"), 
+           sep = " ") %>% 
+  select(-c(DAY,OBJECTID,Join_Count,TARGET_FID,LOCATIONID,X,Y,
+            StdTime,Dimensions)) %>% 
+  pivot_wider(names_from =  MONTH,
+              values_from = spei_01) %>% 
+  select(-state_name)
+
+#### renaming the names of the dataframe ##### 
+
+Old_names <- colnames(Spei_gamma)
+
+New_names <- c("State","County","Longitude","Latitude",
+               "Year","Jan_Spei_gamma","Feb_Spei_gamma",
+               "Mar_Spei_gamma","Apr_Spei_gamma",
+               "May_Spei_gamma","Jun_Spei_gamma","Jul_Spei_gamma",
+               "Aug_Spei_gamma","Sep_Spei_gamma","Oct_Spei_gamma",
+               "Nov_Spei_gamma","Dec_Spei_gamma")
+
+
+Spei_gamma <- Spei_gamma %>% 
+                 rename_at(vars(Old_names), ~ New_names)
+
+
+
+
+#######################################
+############### Now for the SPEI pearson data #### 
+################
+
+
+Spei_pearson <- read_excel(here("Raw_Datasets",
+                        "Historical_Drought_Data",
+                        "SPEI_PEARSON.xlsx")) %>% 
+  mutate(StdTime = as.Date(StdTime)) %>% 
+  mutate(full_Date = format(StdTime,format = "%Y %b %d")) %>%
+  separate(full_Date, into = c("YEAR","MONTH","DAY"), 
+           sep = " ") %>% 
+  select(-c(DAY,OBJECTID,Join_Count,TARGET_FID,LOCATIONID,X,Y,
+            StdTime,Dimensions)) %>% 
+  pivot_wider(names_from =  MONTH,
+              values_from = spei_01) %>% 
+  select(-state_name)
+
+#### renaming the names of the dataframe ##### 
+
+Old_names <- colnames(Spei_pearson)
+
+New_names <- c("State","County","Longitude","Latitude",
+               "Year","Jan_Spei_pearson","Feb_Spei_pearson",
+               "Mar_Spei_pearson","Apr_Spei_pearson",
+               "May_Spei_pearson","Jun_Spei_pearson",
+               "Jul_Spei_pearson","Aug_Spei_pearson",
+               "Sep_Spei_pearson","Oct_Spei_pearson",
+               "Nov_Spei_pearson","Dec_Spei_pearson")
+
+
+Spei_pearson <- Spei_pearson %>% 
+                  rename_at(vars(Old_names), ~ New_names)
+
+
+
+#######################################
+###### Now preprocessing the SPI gamma data ###
+########################## 
+
+Spi_gamma <- read_excel(here("Raw_Datasets",
+                          "Historical_Drought_Data",
+                          "SPI_GAMMA.xlsx")) %>% 
+  mutate(StdTime = as.Date(StdTime)) %>% 
+  mutate(full_Date = format(StdTime,format = "%Y %b %d")) %>%
+  separate(full_Date, into = c("YEAR","MONTH","DAY"), 
+           sep = " ") %>% 
+  select(-c(DAY,OBJECTID,Join_Count,TARGET_FID,LOCATIONID,X,Y,
+            StdTime,Dimensions)) %>% 
+  pivot_wider(names_from =  MONTH,
+              values_from = spi_01) %>% 
+  select(-state_name)
+
+#### renaming the names of the dataframe ##### 
+
+Old_names <- colnames(Spi_gamma)
+
+New_names <- c("State","County","Longitude","Latitude",
+               "Year","Jan_Spi_gamma","Feb_Spi_gamma",
+               "Mar_Spi_gamma","Apr_Spi_gamma","May_Spi_gamma",
+               "Jun_Spi_gamma","Jul_Spi_gamma","Aug_Spi_gamma",
+               "Sep_Spi_gamma","Oct_Spi_gamma","Nov_Spi_gamma",
+               "Dec_Spi_gamma")
+
+
+Spi_gamma <- Spi_gamma %>% 
+                 rename_at(vars(Old_names), ~ New_names)
+
+##################################################
+################## Now processing SPI pearson ##
+######## ################
+
+Spi_pearson <- read_excel(here("Raw_Datasets",
+                             "Historical_Drought_Data",
+                             "SPI_PEARSON.xlsx")) %>% 
+  mutate(StdTime = as.Date(StdTime)) %>% 
+  mutate(full_Date = format(StdTime,format = "%Y %b %d")) %>%
+  separate(full_Date, into = c("YEAR","MONTH","DAY"), 
+           sep = " ") %>% 
+  select(-c(DAY,OBJECTID,Join_Count,TARGET_FID,LOCATIONID,X,Y,
+            StdTime,Dimensions)) %>% 
+  pivot_wider(names_from =  MONTH,
+              values_from = spi_01) %>% 
+  select(-state_name)
+
+#### renaming the names of the dataframe ##### 
+
+Old_names <- colnames(Spi_pearson)
+
+
+New_names <- c("State","County","Longitude","Latitude",
+               "Year","Jan_Spi_pearson","Feb_Spi_pearson",
+               "Mar_Spi_pearson","Apr_Spi_pearson","May_Spi_pearson",
+               "Jun_Spi_pearson","Jul_Spi_pearson","Aug_Spi_pearson",
+               "Sep_Spi_pearson","Oct_Spi_pearson","Nov_Spi_pearson",
+               "Dec_Spi_pearson")
+
+
+Spi_pearson <- Spi_pearson %>% 
+                 rename_at(vars(Old_names), ~ New_names)
+
+
+
+
+
+
+
+####### Now merging the four dataframes together 
+
+Drought_data <- list(Spei_gamma,Spei_pearson,
+                     Spi_gamma,Spi_pearson) %>% 
+                             reduce(inner_join)
+
+
+```
+
+Exporting this data to a folder called Processed_Datasets 
+
+```{r}
+
+##### writing out this file ###
+
+write.csv(Drought_data,
+          "~/Yield_forecast_Sunflowers/Yield_forecast_Sunflowers/Processed_Datasets/Drought_data.csv",
+          row.names = FALSE)
+
+
+```
+
+
+

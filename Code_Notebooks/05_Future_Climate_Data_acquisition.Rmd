@@ -1,0 +1,268 @@
+---
+title: "Future Climate Data acquisition"
+output: html_notebook
+---
+
+Future Climate data used in this study was downloaded from WorldClim database
+(https://www.worldclim.org/data/cmip6/cmip6_clim2.5m.html).Data from ACCESS-ESM1-5
+climate model at 2.5 minutes spatial resolution was used.
+
+The datasets used are named as tn (for minumum temperature),
+tx (for maximum temperature) and pr (for precipitation).
+
+
+Alternatively, here is some code to acquire the data using the R package geodata
+
+**Loading the libraries**
+
+```{r}
+
+library(here)
+library(geodata)
+
+
+```
+
+
+Create a subfolder within the Raw_Datasets folder 
+
+
+```{r}
+
+######### 2021-2040 ####
+
+######## Tmin
+
+path = "path to data"
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '126', time = "2021-2040",
+            var = "tmin", res = 2.5, 
+            path = path)
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '245', time = "2021-2040",
+            var = "tmin", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '370', time = "2021-2040",
+            var = "tmin", res = 2.5, 
+            path = path)
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '585', time = "2021-2040",
+            var = "tmin", res = 2.5, 
+            path = path) 
+
+
+
+####### Tmax 
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '126', time = "2021-2040",
+            var = "tmax", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '245', time = "2021-2040",
+            var = "tmax", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '370', time = "2021-2040",
+            var = "tmax", res = 2.5, 
+            path = path)
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '585', time = "2021-2040",
+            var = "tmax", res = 2.5, 
+            path = path) 
+
+
+
+####### Precipitation 
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '126', time = "2021-2040",
+            var = "prec", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '245', time = "2021-2040",
+            var = "prec", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '370', time = "2021-2040",
+            var = "prec", res = 2.5, 
+            path = path)
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '585', time = "2021-2040",
+            var = "prec", res = 2.5, 
+            path = path) 
+
+
+
+
+
+###################### 2041-2060 ############ 
+
+######## Tmin
+
+path = "path to data"
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '126', time = "2041-2060",
+            var = "tmin", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '245', time = "2041-2060",
+            var = "tmin", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '370', time = "2041-2060",
+            var = "tmin", res = 2.5, 
+            path = path)
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '585', time = "2041-2060",
+            var = "tmin", res = 2.5, 
+            path = path) 
+
+######## Tmax
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '126', time = "2041-2060",
+            var = "tmax", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '245', time = "2041-2060",
+            var = "tmax", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '370', time = "2041-2060",
+            var = "tmax", res = 2.5, 
+            path = path)
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '585', time = "2041-2060",
+            var = "tmax", res = 2.5, 
+            path = path) 
+
+
+##### Precipitation  
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '126', time = "2041-2060",
+            var = "prec", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '245', time = "2041-2060",
+            var = "prec", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '370', time = "2041-2060",
+            var = "prec", res = 2.5, 
+            path = path)
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '585', time = "2041-2060",
+            var = "prec", res = 2.5, 
+            path = path) 
+
+
+
+############## 2061-2080 #############
+
+######## Tmin
+
+path = "path to data"
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '126', time = "2061-2080",
+            var = "tmin", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '245', time = "2061-2080",
+            var = "tmin", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '370', time = "2061-2080",
+            var = "tmin", res = 2.5, 
+            path = path)
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '585', time = "2061-2080",
+            var = "tmin", res = 2.5, 
+            path = path) 
+
+
+########## Tmax 
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '126', time = "2061-2080",
+            var = "tmax", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '245', time = "2061-2080",
+            var = "tmax", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '370', time = "2061-2080",
+            var = "tmax", res = 2.5, 
+            path = path)
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '585', time = "2061-2080",
+            var = "tmax", res = 2.5, 
+            path = path) 
+
+
+#### Precipitation 
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '126', time = "2061-2080",
+            var = "prec", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '245', time = "2061-2080",
+            var = "prec", res = 2.5, 
+            path = path)
+
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '370', time = "2061-2080",
+            var = "prec", res = 2.5, 
+            path = path)
+
+
+cmip6_world(model = 'ACCESS-ESM1-5',ssp = '585', time = "2061-2080",
+            var = "prec", res = 2.5, 
+            path = path) 
+
+
+```

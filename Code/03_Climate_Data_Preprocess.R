@@ -96,7 +96,7 @@ Old_names <- colnames(Precip)
 
 New_names <- c("State","County","Longitude","Latitude",
                "Year","Jan_Precip","Feb_Precip","Mar_Precip",
-               "Apr_Tmin","May_Tmin","Jun_Tmin","Jul_Precip",
+               "Apr_Precip","May_Precip","Jun_Precip","Jul_Precip",
                "Aug_Precip","Sep_Precip","Oct_Precip","Nov_Precip",
                "Dec_Precip")
 
@@ -104,14 +104,14 @@ New_names <- c("State","County","Longitude","Latitude",
 Precip <- Precip %>% rename_at(vars(Old_names), ~ New_names)
 
 
-
-
-####### Now merging the three dataframes together 
+###### Now merging the three dataframes together 
 
 Climate_data <- list(Tmax,Tmin,Precip) %>% 
                                         reduce(inner_join,
-                                               by = c("Longitude",
-                                                      "Latitude"))
+                                               by = c("State","County",
+                                                      "Latitude",
+                                                  "Longitude","Year")) 
+
 
 ##### writing out this file ###
 

@@ -5,7 +5,7 @@ rm(list = ls())
 library(tidyUSDA)
 library(tidyverse)
 
-
+##
 
 key <- "D923D273-EDCC-3FA9-AE2B-E5513DD00E06"
 
@@ -34,6 +34,33 @@ Sunflower_Yield <- getQuickstat(sector='CROPS',
 ### Looking at the counties and viewing how many times they are represented
 Sunflower_Yield %>% dplyr::group_by(county_name) %>% summarise(n()) %>% View()
 
+
+### National Average #### Latest value 
+
+Sunflower_Yield %>% 
+  dplyr::filter(year == 2022) %>% 
+  dplyr::summarize(mean(Value)) 
+
+
+### State level average ### Latest value from each state ###
+
+Sunflower_Yield %>% 
+  dplyr::select(Value,year,state_name) %>% 
+  aggregate(year ~ state_name, max)
+
+
+
+
+Sunflower_Yield %>% 
+  dplyr::select(Value,year,state_name) %>% 
+  aggregate(year ~ state_name, max) %>% 
+  dplyr::left_join(Sunflower_Yield) %>% 
+  dplyr::group_by(state_name) %>% 
+  dplyr::summarise(mean(Value)) %>% 
+  View()
+
+
+
 ### removing some of the states and counties outside of our study 
 
 Sunflower_Yield <- Sunflower_Yield %>% 
@@ -42,6 +69,11 @@ Sunflower_Yield <- Sunflower_Yield %>%
                    dplyr::filter(state_name != "CALIFORNIA") %>%
                    dplyr::select(year,state_name,county_name,Value) %>%
                    dplyr::rename(Yield = Value)
+
+
+
+
+  
 
 
 

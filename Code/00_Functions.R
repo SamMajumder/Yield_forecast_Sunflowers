@@ -1,6 +1,6 @@
 
 
-#### This function will read in all excel files from the folder 
+### This function will read in all excel files from the folder 
 ## aggregate them and change the names of the columns where appropriate ###
 
 
@@ -331,7 +331,6 @@ Future_predictions <- function(Future_State_data_126,
                                Future_State_data_370,
                                Future_State_data_585,
                                Ag_prac_data,
-                               Drought_data,
                                Imp_variables,
                                Model,
                                State_sf,
@@ -345,15 +344,12 @@ Future_predictions <- function(Future_State_data_126,
   #### renaming the column of the Ag_prac data
   Ag_prac_data <- Ag_prac_data %>% dplyr::rename(Year_latest = Year)
   
-  ##### renaming the column of Drought data ###
-  Drought_data <- Drought_data %>% dplyr::rename(Year_latest = Year)
   
   ### Joining the ag_prac data to the Future Climate data for the state 
   
   Future_State_data_126 <- Future_State_data_126 %>% dplyr::rename(State = STATE,
                                                             County = COUNTY) %>% 
                               dplyr::inner_join(Ag_prac_data, by = c("State","County")) %>% 
-                              dplyr::inner_join(Drought_data, by = c("State","County")) %>%
                               dplyr::mutate(RCP = "126") %>% 
                               dplyr::mutate(Timeframe = "2040")
   
@@ -414,8 +410,7 @@ Future_predictions <- function(Future_State_data_126,
   Future_State_data_245 <- Future_State_data_245 %>% 
                                                   dplyr::rename(State = STATE,
                                                             County = COUNTY) %>% 
-                            dplyr::inner_join(Ag_prac_data, by = c("State","County")) %>% 
-                            dplyr::inner_join(Drought_data, by = c("State","County"))
+                            dplyr::inner_join(Ag_prac_data, by = c("State","County"))
   
   
   
@@ -472,8 +467,7 @@ Future_predictions <- function(Future_State_data_126,
   
   Future_State_data_370 <- Future_State_data_370 %>% dplyr::rename(State = STATE,
                                                             County = COUNTY) %>% 
-                             dplyr::inner_join(Ag_prac_data, by = c("State","County")) %>%
-                             dplyr::inner_join(Drought_data, by = c("State","County"))
+                             dplyr::inner_join(Ag_prac_data, by = c("State","County")) 
   
   
   
@@ -530,8 +524,7 @@ Future_predictions <- function(Future_State_data_126,
   
   Future_State_data_585 <- Future_State_data_585 %>% dplyr::rename(State = STATE,
                                                             County = COUNTY) %>% 
-                           dplyr::inner_join(Ag_prac_data, by = c("State","County")) %>%
-                           dplyr::inner_join(Drought_data, by = c("State","County"))
+                           dplyr::inner_join(Ag_prac_data, by = c("State","County")) 
   
   
   
@@ -608,7 +601,6 @@ Future_predictions_all_timeframes <- function(Future_State_data_2040_126,
                                                     Future_State_data_2080_370,
                                                     Future_State_data_2080_585,
                                                     Ag_prac_data,
-                                                    Drought_data,
                                                     Imp_variables,
                                                     Model,
                                                     State_sf,
@@ -624,7 +616,6 @@ Future_predictions_all_timeframes <- function(Future_State_data_2040_126,
                                         Future_State_data_2040_370,
                                         Future_State_data_2040_585,
                                         Ag_prac_data,
-                                        Drought_data,
                                         Imp_variables,
                                         Model,
                                         State_sf,
@@ -641,7 +632,6 @@ Future_predictions_all_timeframes <- function(Future_State_data_2040_126,
                                         Future_State_data_2060_370,
                                         Future_State_data_2060_585,
                                         Ag_prac_data,
-                                        Drought_data,
                                         Imp_variables,
                                         Model,
                                         State_sf,
@@ -658,7 +648,6 @@ Future_predictions_all_timeframes <- function(Future_State_data_2040_126,
                                         Future_State_data_2060_370,
                                         Future_State_data_2060_585,
                                         Ag_prac_data,
-                                        Drought_data,
                                         Imp_variables,
                                         Model,
                                         State_sf,
@@ -821,7 +810,35 @@ ALE_values <- function(predictors_train,
 }
 
 
+######## writing a function which would calculatre R2 and normalized as well 
+## as raw RMSE ###  
 
+Model_perf <- function(actual_train,predicted_train,
+                       actual_test,predicted_test) {
+    
+  RMSE_test <- caret::RMSE(predicted_test,actual_test) 
+  
+  cat(RMSE_test, " is RMSE_test\n")  
+  
+  ############
+  ## calculating normalized RMSE for test ### 
+  ############
+  
+  
+  Test_range <- max(actual_test) - min(actual_test)  
+  
+  Normalized_RMSE_test <- RMSE_test/Test_range 
+  
+  cat(Normalized_RMSE_test, " is Normalized RMSE test\n")  
+  
+  ## Putting everything in a list ###
+  
+  Results <- list("RMSE for test" = RMSE_test,
+                  "Normalized RMSE for test" = Normalized_RMSE_test)
+  
+  return(Results)
+  
+}
 
 
 

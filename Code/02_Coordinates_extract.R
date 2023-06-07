@@ -7,7 +7,7 @@ packages <- c("sf","tidyverse","here")
 lapply(packages, require,character.only = T)
 
 
-## Reading in the data and                   
+### Reading in the data and                   
 #### Recoding the full state names to abbreviatiojns ###
 
 Regions <- read.csv(here("Raw_Datasets",

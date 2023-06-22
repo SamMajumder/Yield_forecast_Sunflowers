@@ -10,6 +10,7 @@ Yield and weather data acquired programmatically from USDA and NOAA databases fo
 
 ## Workflow flochart 
 
-![Figure 1](https://github.com/SamMajumder/Yield_forecast_Sunflowers/assets/83839244/54d73345-c3cc-4a97-b43b-60853b5338b1)   
+![Figure 1](https://github.com/SamMajumder/Yield_forecast_Sunflowers/assets/83839244/54720c59-b273-4f43-8889-fdf26709454d)
+
 
 Workflow for training and validating ML models used in Chapter 4. Applied to national and state-level datasets with historical gridded monthly precipitation, temperature, area planted/harvested, and yield data. Datasets divided into training/testing at 2005. Recursive Feature Elimination (RFE) used to select optimal predictors. Training datasets used to train RF, GBM, and XGB regression models. Predictive performance evaluated using normalized RMSE on testing datasets. Best model chosen to compute ALE and generate yield forecasts for future periods under four socioeconomic pathways (SSP 1-2.6, SSP 2-4.5, SSP 3-7.5, SSP 5-8.5).

@@ -1,5 +1,3 @@
-
-
 rm(list = ls())
 
 library(here)
@@ -17,14 +15,15 @@ Future_predictions <- readRDS(here::here("RDS_objects",
 Average_overall_yearly_yield <- Future_predictions %>% 
                                     dplyr::group_by(RCP,Timeframe) %>% 
                                     dplyr::summarize(Average_overall_yearly_Yield = mean(Predictions),
-                                              Standard_deviations = sd(Predictions))
+                                              Standard_deviations = sd(Predictions)) %>% 
+                                    dplyr::rename(SSP=RCP)
 
 
 
 ## Setting factors ### RCPS are factors ### 
 
 
-Average_overall_yearly_yield$RCP <- factor(Average_overall_yearly_yield$RCP, 
+Average_overall_yearly_yield$SSP <- factor(Average_overall_yearly_yield$SSP, 
                                      levels = c("126","245","370","585"))
 
 
@@ -63,38 +62,43 @@ Sunflower_Yield <- getQuickstat(sector='CROPS',
 Sunflower_Yield %>% dplyr::group_by(county_name) %>% summarise(n()) %>% View()
 
 
-### National Average #### Latest value 
+### Subsetting the datasets based on time ### 2000 to 2022 ##
+### then take the average and standard deviations of the yield within this timeframe ### 
 
-Latest_national_average <- Sunflower_Yield %>% 
-                               dplyr::filter(year == 2022) %>% 
+Historical_yield_data <- Sunflower_Yield %>% 
+                               dplyr::filter(state_name != "CALIFORNIA") %>% 
+                               dplyr::filter(state_name != "OKLAHOMA") %>%   
+                               dplyr::filter(between(year,2000,2020)) %>% 
                                dplyr::summarize(Average_overall_yearly_Yield = mean(Value),
                                                 Standard_deviations = sd(Value)) %>% 
-                               dplyr::mutate(Timeframe = 2022)
+                               dplyr::mutate(Timeframe = "2000-2020")
+                               
 
 
 #### Repeating the dataframe ###
 ### RCP ### 
 
-RCP <- rep(c("126","245","370","585"),3)
+SSP <- rep(c("126","245","370","585"),3)
 
 #### 
 
-Latest_national_average <- cbind(RCP,Latest_national_average)
+Historical_data <- cbind(SSP,Historical_yield_data)
 
 
 ########
 #### Adding the Latest National Average to this dataset ###
 ########### 
 
-Average_overall_yearly_yield <- rbind(Latest_national_average,
+Average_overall_yearly_yield <- rbind(Historical_data,
                                       Average_overall_yearly_yield)
+
 
 
 ## Setting factors ### Timeperiod are factors ### 
 
 
 Average_overall_yearly_yield$Timeframe <- factor(Average_overall_yearly_yield$Timeframe, 
-                                                levels = c("2022","2021-2040",
+                                                levels = c("2000-2020","2021-2040",
                                                            "2041-2060","2061-2080"))
 
 
@@ -119,8 +123,8 @@ brewer.pal(9, 'YlOrRd') ## displaying the hex codes
 Average_overall_yearly_yield %>% 
   ggplot(aes(x= Timeframe,
              y = Average_overall_yearly_Yield,
-             group=RCP,
-             colour = RCP)) +
+             group=SSP,
+             colour = SSP)) +
   geom_line(size = 1) +
   geom_point() +
   geom_errorbar(aes(ymin=Average_overall_yearly_Yield - Standard_deviations, 
@@ -144,10 +148,12 @@ ggsave("Figure 5.svg")
 ######################
 #######
 ### Average yearly yield at a state wide level ###                                                  
+
 Average_Yearly_Yield <- Future_predictions %>% 
                              dplyr::group_by(State,RCP,Timeframe) %>% 
                              dplyr::summarize(Average_Yearly_Yield = mean(Predictions),
-                                              Standard_deviations = sd(Predictions))
+                                              Standard_deviations = sd(Predictions)) %>% 
+                             dplyr::rename(SSP=RCP)
 
 
 #Average_National_Error <- Future_predictions %>% group_by(RCP,Timeframe) %>% summarize(Average_National_Error = mean(Mean_Error))
@@ -199,68 +205,84 @@ Average_Yearly_Yield$State <- factor(Average_Yearly_Yield$State,
 ### Historical data ##
 ####### 
 
-
-### State level average ### Latest value from each state ###
-
-Latest_Year <- Sunflower_Yield %>% 
-                     dplyr::select(Value,year,state_name) %>% 
-                     aggregate(year ~ state_name, max)
+#################
+### NOW ADDING THE HISTORICAL DATA ### 
+################ 
 
 
+key <- "D923D273-EDCC-3FA9-AE2B-E5513DD00E06"
 
 
-Latest_Yield_value <- Sunflower_Yield %>% 
-  dplyr::select(Value,year,state_name) %>% 
-  aggregate(year ~ state_name, max) %>% 
-  dplyr::left_join(Sunflower_Yield) %>% 
-  dplyr::group_by(state_name) %>% 
-  dplyr::summarise(mean(Value),
-                   sd(Value))
+years <- c("1976","1977","1978","1979","1980","1981","1982","1983","1984",
+           "1985","1986","1987","1988","1989","1990","1991","1992","1993",
+           "1994","1995","1996","1997","1998","1999","2000","2001","2002",
+           "2003","2004","2005","2006","2007","2008","2009","2010","2011",
+           "2012","2013","2014","2015","2016","2017","2018","2019","2020",
+           "2021","2022")
 
 
-Latest_Yield_value <- inner_join(Latest_Year,Latest_Yield_value) 
+Sunflower_Yield <- getQuickstat(sector='CROPS',
+                                group = "FIELD CROPS",
+                                commodity = "SUNFLOWER",
+                                category = "YIELD",
+                                domain = "TOTAL",
+                                key = key,
+                                program = 'SURVEY',
+                                data_item = "SUNFLOWER, OIL TYPE - YIELD, MEASURED IN LB / ACRE",
+                                geographic_level = 'COUNTY',
+                                year = years)
 
-### Removing Okhlahoma and California #### 
 
-Latest_Yield_value <- Latest_Yield_value %>% 
-  dplyr::filter(state_name != "CALIFORNIA") %>%
-  dplyr::filter(state_name != "OKLAHOMA") %>% 
-  dplyr::rename(Average_Yearly_Yield = `mean(Value)`) %>% 
-  dplyr::rename(Standard_deviations = `sd(Value)`) %>%
-  dplyr::mutate(Standard_deviations = replace_na(Standard_deviations,0)) %>% 
-  dplyr::rename(Timeframe = `year`) %>% 
-  dplyr::rename(State = state_name)
+
+
+
+
+### State level average ### 2000 to 2020 ###
+
+Historical_yield_data_state <- Sunflower_Yield %>% 
+                                          dplyr::filter(state_name != "CALIFORNIA") %>% 
+                                          dplyr::filter(state_name != "OKLAHOMA") %>% 
+                                          dplyr::filter(between(year,2000,2020)) %>%  
+                                          dplyr::group_by(state_name) %>% 
+                                          dplyr::summarize(Average_Yearly_Yield = mean(Value),
+                                                           Standard_deviations = mean(Value)) 
+
 
 
 #######
-## Repating each state four times ## once for each SSP ##
+## Repeating each state four times ## once for each SSP ##
 ######## three timeframes 
 
 
-Latest_Yield_value <- Latest_Yield_value %>% 
-                                  slice(rep(1:n(), 12))
+Average_overall_yearly_yield_state <- Historical_yield_data_state %>% 
+                                                         slice(rep(1:n(), 12))
 
 
+Average_overall_yearly_yield_state <- Average_overall_yearly_yield_state %>% 
+                                                                   arrange(state_name) %>% 
+                                                                   dplyr::rename(State = state_name) %>% 
+                                                                   dplyr::mutate(Timeframe = "2000-2020")
 
-
-Latest_Yield_value <- Latest_Yield_value %>% 
-                                         arrange(State) 
 ## Change the names of the state from all upper case to first letter uppercase and all lowercase
 
-Latest_Yield_value$State <- str_to_title(Latest_Yield_value$State)
+Average_overall_yearly_yield_state$State <- str_to_title(Average_overall_yearly_yield_state$State)
 
 
 ## extracting the SSPs
-RCP <- Average_Yearly_Yield$RCP
+SSP <- Average_Yearly_Yield$SSP
 
 
 ## Adding the RCP to the latest Yield values for each state 
-Latest_Yield_value <- cbind(RCP,Latest_Yield_value)
+Average_overall_yearly_yield_state <- cbind(SSP,Average_overall_yearly_yield_state)
 
-### Now add the future Yield forecast for each state to Latest Yield Value ###
 
-Average_Yearly_Yield <- rbind(Latest_Yield_value,Average_Yearly_Yield)
+### Join the historical and future prediction data ### 
 
+Average_future_yearly_yield <- rbind(Average_Yearly_Yield,
+                                     Average_overall_yearly_yield_state)
+
+
+########################
 
 ######## Display color pallette ##
 
@@ -287,14 +309,14 @@ names(SSP_labs) <- c("126", "245","370","585")
 
 ## Setting factors ### Timeperiod are factors ### 
 
-Average_Yearly_Yield$Timeframe <- factor(Average_Yearly_Yield$Timeframe, 
-                                                 levels = c("2016","2017","2018","2022",
+Average_future_yearly_yield$Timeframe <- factor(Average_future_yearly_yield$Timeframe, 
+                                                 levels = c("2000-2020",
                                                             "2021-2040",
                                                             "2041-2060","2061-2080"))
 
 ## Setting up the factors for regions ####
 
-Average_Yearly_Yield$State <- factor(Average_Yearly_Yield$State,
+Average_future_yearly_yield$State <- factor(Average_future_yearly_yield$State,
                                                       levels = c("South Dakota",
                                                                  "Nebraska",
                                                                  "Texas",
@@ -308,7 +330,7 @@ Average_Yearly_Yield$State <- factor(Average_Yearly_Yield$State,
 
 
 
-Average_Yearly_Yield %>% 
+Average_future_yearly_yield %>% 
   ggplot(aes(x= Timeframe,
         y=Average_Yearly_Yield,
         group=State,
@@ -322,8 +344,8 @@ Average_Yearly_Yield %>%
   scale_color_manual("Regions",
                     values = c("#FC8D62","#8DA0CB","#E78AC3","#A6D854",
                                "#FFD92F","#E5C494","#B3B3B3")) +
-  facet_wrap(~RCP,
-             labeller = labeller(RCP = SSP_labs)) +
+  facet_wrap(~SSP,
+             labeller = labeller(SSP = SSP_labs)) +
   labs(x = "Time Period",
        y="Average Yearly Yield (lb/acre)")  +
   theme(text = element_text(size = 10)) +
@@ -333,6 +355,11 @@ Average_Yearly_Yield %>%
 
 
 ggsave("Figure S15.svg")
+
+
+
+
+
 
 
 

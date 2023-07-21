@@ -37,12 +37,17 @@ Sunflower_Yield <- getQuickstat(sector='CROPS',
 ### Looking at the counties and viewing how many times they are represented
 Sunflower_Yield %>% dplyr::group_by(county_name) %>% summarise(n()) %>% View()
 
+### Subsetting the datasets based on time ### 2000-2020 ##
+### then take the average of the yield within this timeframe ###
 
-### National Average #### Latest value 
+Historical_yield_data <- Sunflower_Yield %>% 
+                            dplyr::filter(state_name != "CALIFORNIA") %>% 
+                            dplyr::filter(state_name != "OKLAHOMA") %>%   
+                            dplyr::filter(between(year,2000,2020)) %>% 
+                            dplyr::summarize(Average_overall_yearly_Yield = mean(Value)) %>% 
+                            dplyr::mutate(Timeframe = "2000-2020")
 
-Latest_national_average <- Sunflower_Yield %>% 
-                               dplyr::filter(year == 2022) %>% 
-                               dplyr::summarize(Latest_National_Average = mean(Value)) 
+
 
 
 ############ Future Data #####
@@ -55,14 +60,14 @@ Future_predictions <- readRDS(here::here("RDS_objects",
 ### Average overall yearly yield ## at a national level ###
 
 Average_overall_yearly_yield <- Future_predictions %>% 
-  dplyr::group_by(RCP,Timeframe) %>% 
-  dplyr::summarize(Average_overall_yearly_Yield = mean(Predictions))
+                                    dplyr::group_by(RCP,Timeframe) %>% 
+                                    dplyr::summarize(Average_overall_yearly_Yield = mean(Predictions))
 
 
 
 
-National_Level_Yield_Decline <- Average_overall_yearly_yield %>%
-                                      mutate(Latest_National_Average = Latest_national_average$Latest_National_Average) %>% 
+National_Level_Yield_Change <- Average_overall_yearly_yield %>%
+                                      mutate(Latest_National_Average = Historical_yield_data$Average_overall_yearly_Yield) %>% 
                                       pivot_wider(names_from = Timeframe, 
                                       values_from = Average_overall_yearly_Yield) %>% 
                                       mutate(Percent_Change_First_Period = ((`2021-2040` - Latest_National_Average)/Latest_National_Average) * 100) %>% 
@@ -75,8 +80,8 @@ National_Level_Yield_Decline <- Average_overall_yearly_yield %>%
 
 
 
-write.csv(National_Level_Yield_Decline,
-          "C:/Users/samba/Documents/Yield_forecast_Sunflowers/Yield_forecast_Sunflowers/Processed_Datasets/Nationa_Yield_change.csv",
+write.csv(National_Level_Yield_Change,
+          "C:/Users/samba/Documents/Yield_forecast_Sunflowers/Yield_forecast_Sunflowers/Processed_Datasets/National_Yield_change.csv",
           row.names = FALSE)
 
 
@@ -89,31 +94,20 @@ write.csv(National_Level_Yield_Decline,
 
 ### State level average ### Latest value from each state ###
 
-Latest_Year <- Sunflower_Yield %>% 
-                  dplyr::select(Value,year,state_name) %>% 
-                  aggregate(year ~ state_name, max)
- 
+### Subsetting the datasets based on time ### 2000-2020 ##
+### then take the average of the yield within this timeframe ###
+
+Historical_yield_data_state <- Sunflower_Yield %>% 
+                                  dplyr::filter(state_name != "CALIFORNIA") %>% 
+                                  dplyr::filter(state_name != "OKLAHOMA") %>%   
+                                  dplyr::filter(between(year,2000,2020)) %>% 
+                                  dplyr::group_by(state_name) %>% 
+                                  dplyr::summarize(Historical_average = mean(Value)) %>% 
+                                  dplyr::mutate(Latest_Timeframe = "2000-2020") %>% 
+                                  dplyr::rename(State = state_name) 
 
 
 
-Latest_Yield_value <- Sunflower_Yield %>% 
-                          dplyr::select(Value,year,state_name) %>% 
-                          aggregate(year ~ state_name, max) %>% 
-                          dplyr::left_join(Sunflower_Yield) %>% 
-                          dplyr::group_by(state_name) %>% 
-                          dplyr::summarise(mean(Value))
-
-
-Latest_Yield_value <- inner_join(Latest_Year,Latest_Yield_value) 
-
-### Removing Okhlahoma and California #### 
-
-Latest_Yield_value <- Latest_Yield_value %>% 
-                            dplyr::filter(state_name != "CALIFORNIA") %>%
-                            dplyr::filter(state_name != "OKLAHOMA") %>% 
-                            dplyr::rename(Latest_Average = `mean(Value)`) %>% 
-                            dplyr::rename(Latest_Year = `year`) %>% 
-                            dplyr::rename(State = state_name)
 
 
 
@@ -158,8 +152,12 @@ Average_Yearly_Yield <- Average_Yearly_Yield %>%
 
 ##### Joining the year and the latest yield value with the future Yield projections
 
-Latest_Yield_value <- Latest_Yield_value %>% 
-                                right_join(Average_Yearly_Yield)
+
+cbind(Historical_yield_data_state,Average_Yearly_Yield)
+
+Latest_Yield_value <- Historical_yield_data_state %>% 
+                             dplyr::left_join(Average_Yearly_Yield,
+                                 by = c("State"))
 
 
 ##############
@@ -168,7 +166,7 @@ Latest_Yield_value <- Latest_Yield_value %>%
 State_level_yield_change <- Latest_Yield_value %>%
                                   pivot_wider(names_from = Timeframe, 
                                   values_from = Average_Yearly_Yield) %>% 
-                                  mutate(Percent_Change_First_Period = 100 *(`2021-2040` - Latest_Average)/Latest_Average) %>% 
+                                  mutate(Percent_Change_First_Period = 100 *(`2021-2040` - Historical_average)/Historical_average) %>% 
                                   mutate(Percent_Change_First_to_Second_Period = 100 *(`2041-2060` - `2021-2040`)/`2021-2040`) %>% 
                                   dplyr::rename(First_Period = `2021-2040`,
                                                 Second_Period = `2041-2060`,
@@ -182,6 +180,14 @@ State_level_yield_change <- Latest_Yield_value %>%
 write.csv(State_level_yield_change,
           "C:/Users/samba/Documents/Yield_forecast_Sunflowers/Yield_forecast_Sunflowers/Processed_Datasets/State_Level_Yield_change.csv",
           row.names = FALSE)
+
+
+
+
+
+
+
+  
 
 
 

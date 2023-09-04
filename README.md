@@ -1,31 +1,31 @@
-# Yield_forecast_Sunflowers
+# 🌻 Yield_forecast_Sunflowers
 
-## Background ## 
+## 🌍 Background ## 
 
 Adverse impacts to global food production due to climate change necessitate accurate crop yield forecasting. Sunflower is an important oilseed crop in the US and is sensitive to shifts in climate. Thus accurate foreacating and understanidng of the factors that lead to changes in yield is necessary for future planning and management strategies. In this work I use, explainable AI (XAI) to identify climate variables influencing yield at national and regional scales. I also use ML to forecast sunflower yield per acre in the US for future periods under different emissions scenarios. The approach helps identify key climate variables, their thresholds, and their effects on yield, aiding in understanding and adaptation strategies.
 
-## Software and programming language used
+## 💻 Software and programming language used
 
 Data was compiled, cleaned, and processed using a combination of the R programming language (R Core Team 2023) and ArcGIS Pro software (version 2.9). All data cleaning, visualizations and modeling were performed using various packages created in the R programming environment. 
 
-## Study area, data sources and data preperation
+## 🗺️ Study area, data sources and data preperation
 
 Yield and weather data acquired programmatically from USDA and NOAA databases for sunflower seed analysis. Historical data spans 1976-2022, covering 189 counties in 7 states. Future projections obtained from WorldClim repository (CMIP6 models) for 2021-2080, with four Shared Socioeconomic Pathways (SSPs). All data reprojected and extracted at county centroids. Tidyverse used for data preparation. Missing data removed, resulting in 177 counties. Training/testing datasets split at 2004. State-level datasets created for each of the 7 states. Training datasets contain 70-80% of data. 
 
-## Workflow flochart 
+## 📊 Workflow flochart 
 
 ![Figure 1](https://github.com/SamMajumder/Yield_forecast_Sunflowers/assets/83839244/b9f2eeb2-83ce-4a68-917d-76d4a00529dc)
 
 
 Workflow for training and validating ML models used in this project. Applied to national and state-level datasets with historical gridded monthly precipitation, temperature, area planted/harvested, and yield data. Datasets divided into training/testing at 2005. Recursive Feature Elimination (RFE) used to select optimal predictors. Training datasets used to train RF, GBM, and XGB regression models. Predictive performance evaluated using normalized RMSE on testing datasets. Best model chosen to compute ALE and generate yield forecasts for future periods under four socioeconomic pathways (SSP 1-2.6, SSP 2-4.5, SSP 3-7.5, SSP 5-8.5). 
 
-## Shiny APP ## 
+## 🌐 Shiny APP ## 
 
 The resulting Shiny app highlighting the main results from this work can be found here: https://sammajumder.shinyapps.io/SunScope/ 
 
 The GitHub repository containing the Shiny App code can be found here: https://github.com/SamMajumder/Yield_forecast_Sunflowers_Shiny 
 
-## Main results ## 
+## 📈 Main results ## 
 
 ### Important predictors influencing yield at the national level
 ![Figure 2](https://github.com/SamMajumder/Yield_forecast_Sunflowers/assets/83839244/03e73fbd-6268-4680-8625-fab48abe2767) 

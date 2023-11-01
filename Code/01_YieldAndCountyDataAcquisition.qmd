@@ -1,0 +1,300 @@
+---
+format: 
+  html:
+   self-contained: true
+   code-fold: true
+   code-summary: "Show the code"
+editor: visual
+---
+
+## 1) Package loading
+
+-   A list of necessary R packages is created, including **`here`**, **`tidyverse`**, **`tidyUSDA`**, **`ggplot2`**, **`gganimate`**, and **`sf`**.
+
+-   **`lapply`** is used to load each of these packages using the **`require`** function.
+
+```{r}
+
+packages <- list("here","tidyverse","tidyUSDA","ggplot2","gganimate","sf")
+lapply(packages, require,character.only = T)
+
+```
+
+## 2) Directory creation:
+
+-   A list of directories to be created is specified.
+
+-   A loop iterates through each directory name, constructs the directory path using the **`here`** function, and creates the directory if it doesn't already exist.
+
+```{r}
+
+dirs_to_create <- c("RawDatasets", "ProcessedDatasets","Figures","SavedModels", "RDSObjects","Shapefiles")
+for (dir_name in dirs_to_create) {
+  dir_path <- here(dir_name)
+  if (!dir.exists(dir_path)) {
+    dir.create(dir_path)
+  }
+}
+
+```
+
+## 3) Data acquisition:
+
+-   A key for accessing the USDA data is specified.
+
+-   A vector of years is created.
+
+-   The **`getQuickstat`** function from the **`tidyUSDA`** package is used to acquire data on Sunflower yield, area harvested, and area planted for specified years.
+
+```{r}
+
+####
+
+key <- "D923D273-EDCC-3FA9-AE2B-E5513DD00E06"
+
+
+years <- c("1976","1977","1978","1979","1980","1981","1982","1983","1984",
+           "1985","1986","1987","1988","1989","1990","1991","1992","1993",
+           "1994","1995","1996","1997","1998","1999","2000","2001","2002",
+           "2003","2004","2005","2006","2007","2008","2009","2010","2011",
+           "2012","2013","2014","2015","2016","2017","2018","2019","2020",
+           "2021","2022")
+
+
+Sunflower_Yield <- getQuickstat(sector='CROPS',
+                                group = "FIELD CROPS",
+                                commodity = "SUNFLOWER",
+                                category = "YIELD",
+                                domain = "TOTAL",
+                                key = key,
+                                program = 'SURVEY',
+                                data_item = "SUNFLOWER, OIL TYPE - YIELD, MEASURED IN LB / ACRE",
+                                geographic_level = 'COUNTY',
+                                year = years)
+
+
+
+########### AREA HARVESTED DATA ##### 
+
+Area_Harvested <- getQuickstat(sector='CROPS',
+                               group = "FIELD CROPS",
+                               commodity = "SUNFLOWER",
+                               category = "AREA HARVESTED",
+                               domain = "TOTAL",
+                               key = key,
+                               program = 'SURVEY',
+                               data_item = "SUNFLOWER, OIL TYPE - ACRES HARVESTED",
+                               geographic_level = 'COUNTY',
+                               year = years)
+
+
+
+###### AREA PLANTED DATA #### 
+
+Area_Planted <- getQuickstat(sector='CROPS',
+                             group = "FIELD CROPS",
+                             commodity = "SUNFLOWER",
+                             category = "AREA PLANTED",
+                             domain = "TOTAL",
+                             key = key,
+                             program = 'SURVEY',
+                             data_item = "SUNFLOWER, OIL TYPE - ACRES PLANTED",
+                             geographic_level = 'COUNTY',
+                             year = years)
+
+
+```
+
+## 4) Data cleaning:
+
+-   The data is filtered to remove unwanted entries (e.g., certain counties and the state of California).
+
+-   Column names are updated for easier reference, and county names are formatted by replacing spaces with underscores.
+
+```{r}
+
+
+#########
+###  Cleaning the downloaded datasets ###
+######## 
+
+Sunflower_Yield <- Sunflower_Yield %>% 
+  dplyr::filter(county_name != "OTHER (COMBINED) COUNTIES") %>%
+  dplyr::filter(county_name != "OTHER COUNTIES") %>%
+  dplyr::filter(state_name != "CALIFORNIA") %>%
+  dplyr::select(year,state_alpha,county_name,Value) %>%
+  dplyr::rename(YEAR = year,
+                YIELD = Value,
+                STATE = state_alpha,
+                COUNTYNAME = county_name) %>% 
+  mutate(COUNTYNAME = gsub(" ","_",COUNTYNAME))
+
+
+Area_Harvested <- Area_Harvested %>% 
+  dplyr::filter(county_name != "OTHER (COMBINED) COUNTIES") %>%
+  dplyr::filter(county_name != "OTHER COUNTIES") %>%
+  dplyr::filter(state_name != "CALIFORNIA") %>%
+  dplyr::select(year,state_alpha,county_name,Value) %>%
+  dplyr::rename(YEAR = year,
+                ACRES_HARVESTED = Value,
+                STATE = state_alpha,
+                COUNTYNAME = county_name) %>% 
+  mutate(COUNTYNAME = gsub(" ","_",COUNTYNAME))
+
+
+Area_Planted <- Area_Planted %>% 
+  dplyr::filter(county_name != "OTHER (COMBINED) COUNTIES") %>%
+  dplyr::filter(county_name != "OTHER COUNTIES") %>%
+  dplyr::filter(state_name != "CALIFORNIA") %>%
+  dplyr::select(year,state_alpha,county_name,Value) %>%
+  dplyr::rename(YEAR = year,
+                ACRES_PLANTED = Value,
+                STATE = state_alpha,
+                COUNTYNAME = county_name) %>% 
+  mutate(COUNTYNAME = gsub(" ","_",COUNTYNAME))
+
+
+
+
+```
+
+## 5) Data merging
+
+The **`Sunflower_Yield`**, **`Area_Planted`**, and **`Area_Harvested`** datasets are merged together using an inner join operation, which ensures that only records present in all datasets are retained.
+
+```{r}
+
+########
+#### Joining the area planted, harvested and yield datasets ###
+###### 
+
+Sunflower <- list(Sunflower_Yield,Area_Planted,
+                  Area_Harvested) %>% 
+                          purrr::reduce(inner_join) 
+
+
+```
+
+## 6) Downloading and processing Shapefile data:
+
+-   The timeout option is set to 10 minutes to allow for the download of large files.
+
+-   A URL for a shapefile containing state centroid data is specified, and the file is downloaded to the local machine.
+
+-   The shapefile is read into R and processed to ensure county names are in uppercase and to select relevant columns.
+
+```{r}
+
+############
+##### Downloading the State centroid shape file
+###
+
+
+#### setting a high timeout limit ## setting it to 10 minutes 
+
+options(timeout=600)
+
+
+# Define the URL
+url <- "https://www.weather.gov/source/gis/Shapefiles/County/c_08mr23.zip"
+
+
+# Define the destination file path using here()
+dest_file <- here("Shapefiles", 
+                  "c_08mr23.zip")
+
+
+# Download the file
+download.file(url, dest_file, mode = "wb")
+
+# Create a directory for the extracted files
+extract_dir <- here("Shapefiles", "US_county_centroids")
+dir.create(extract_dir, showWarnings = FALSE)  # Suppress warnings if directory already exists
+
+# Unzip the file to the newly created directory
+unzip(zipfile = dest_file, exdir = extract_dir)
+
+
+#### read in the state shape file #### 
+
+States <- st_read(here("Shapefiles",
+                       "US_county_centroids",
+                       "c_08mr23.shp")) %>% 
+  dplyr::mutate(COUNTYNAME = str_to_upper(COUNTYNAME)) %>% 
+  dplyr::select(STATE,COUNTYNAME,LON,LAT,geometry)
+
+
+
+
+```
+
+## 7) Further data merging
+
+The **`Sunflower`** dataset is merged with the **`States`** shapefile data using an inner join operation.
+
+```{r}
+
+### Lets join the two ### 
+### and filter the counties which have only one representation
+
+Sunflower <- Sunflower %>% 
+                   inner_join(States)
+
+```
+
+## 8) Additional data cleaning:
+
+-   The data is further cleaned by removing counties and years with insufficient data.
+
+-   Furthermore, counties which have representation on either side of year 2005 are kept in the dataset while counties that do not appear on either side of 2005 are discarded
+
+-   The dataset is converted to a simple features object for spatial analysis.
+
+```{r}
+
+######### removing counties which have only occured once in the dataset and also,
+## removing years where we have only one county 
+
+Sunflower <- Sunflower %>%
+  # Remove counties that only occur once in the dataset
+  group_by(COUNTYNAME) %>%
+  filter(n() > 1) %>%
+  ungroup() %>%
+  # Remove years where only one county is represented
+  group_by(YEAR) %>%
+  filter(n() > 1) %>%
+  ungroup() %>%
+  # Remove state-year combinations with only one county or no yield values
+  group_by(STATE, YEAR) %>%
+  filter(n_distinct(COUNTYNAME) > 1 & any(!is.na(YIELD))) %>%
+  ungroup() %>%
+  ### keeps only the counties which appear on either side of the year 2005
+  group_by(COUNTYNAME) %>%
+  filter(any(YEAR < 2005) & any(YEAR > 2005)) %>%
+  ungroup() %>%
+  # Convert to simple features object (if your data is spatial)
+  st_as_sf() 
+
+
+
+
+```
+
+## 9) Data saving:
+
+The final path to save the **`Sunflower`** dataset is specified, and the dataset is saved as a shapefile for further use.
+
+```{r}
+
+# Create a directory for the Sunflower shapefile
+extract_dir <- here("Shapefiles", "SunflowerYield")
+dir.create(extract_dir, showWarnings = FALSE)  # Suppress warnings if directory already exists
+
+# Corrected path_to_save
+path_to_save <- here("Shapefiles", "SunflowerYield", "SunflowerYield.shp")
+
+# Write the shapefile
+st_write(Sunflower, path_to_save)
+
+
+```

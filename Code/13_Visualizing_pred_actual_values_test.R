@@ -74,8 +74,8 @@ National_and_state_pred_versus_actual$State <- factor(National_and_state_pred_ve
 #### Plotting the prediction versus actual ### 
 
 National_and_state_pred_versus_actual %>% 
-  ggplot(aes(x= Predictions,
-             y= Yield,
+  ggplot(aes(x= Yield,
+             y= Predictions,
              group=State,
              color=State)) +
   geom_abline(linetype = "dashed") +
@@ -88,11 +88,14 @@ National_and_state_pred_versus_actual %>%
                      values = c("#66C2A5","#FC8D62","#8DA0CB","#E78AC3","#A6D854",
                                 "#FFD92F","#E5C494","#B3B3B3")) +
   facet_wrap(~State) +
-  labs(x = "Predicted Yield (LB/Acre)",
-       y="Actual Yield (LB/Acre)") +
+  labs(x = "Actual Yield (LB/Acre)",
+       y= "Predicted Yield (LB/Acre)") +
   theme(text = element_text(size = 10)) +
   theme_bw() +
   theme(legend.position = "none")
+
+
+
 
 
 ggsave("Figure 4.svg")
